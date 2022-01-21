@@ -40,8 +40,8 @@ class MainActivity : AppCompatActivity() {
                     CoroutineScope(Dispatchers.Main).launch {
                         Toast.makeText(this@MainActivity, "Algo ha ido mal", Toast.LENGTH_SHORT).show()
                         binding.pbDownloading.visibility = View.GONE
+                        binding.tvPlanet.text = "Algo ha ido mal"
                     }
-
                 }
 
                 override fun onResponse(call: Call, response: Response) {
@@ -50,26 +50,17 @@ class MainActivity : AppCompatActivity() {
                         val body = responseBody.string()
                         println(body)
                         val gson = Gson()
-
-                        val itemType = object : TypeToken<Planet>() {}.type
-                        val planet = gson.fromJson<Planet>(body, itemType)
+                        val planet = gson.fromJson(body, Planet::class.java)
 
                         println(planet)
-
-                  
                         CoroutineScope(Dispatchers.Main).launch {
                             binding.pbDownloading.visibility = View.GONE
                             Toast.makeText(this@MainActivity, "$planet", Toast.LENGTH_SHORT).show()
+                            binding.tvPlanet.text = planet.name
                         }
                     }
-
-
                 }
-
-            }
-
-
-            )
+            })
         }
     }
 }
