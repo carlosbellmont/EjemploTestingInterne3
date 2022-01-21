@@ -4,28 +4,32 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.core.widget.doAfterTextChanged
 import com.example.ejemplointernet.databinding.ActivityMainBinding
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import okhttp3.*
 import java.io.IOException
-import kotlin.coroutines.coroutineContext
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding : ActivityMainBinding
+    private val viewModel: MainActivityViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        initObservers()
+
         binding.etNumber.doAfterTextChanged {
-            binding.bDescarga.isEnabled = binding.etNumber.text.isNotEmpty()
+            CoroutineScope(Dispatchers.Main).launch {
+                viewModel.shouldEnableButton(binding.etNumber.text.toString())
+            }
         }
 
         binding.bDescarga.setOnClickListener {
@@ -75,6 +79,12 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             })
+        }
+    }
+
+    private fun initObservers() {
+        viewModel.buttonEnabled.observe(this) { enabled ->
+            binding.bDescarga.isEnabled = enabled
         }
     }
 }
