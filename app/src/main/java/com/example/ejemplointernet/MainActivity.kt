@@ -33,58 +33,24 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.bDescarga.setOnClickListener {
-            binding.pbDownloading.visibility = View.VISIBLE
-
-            val client = OkHttpClient()
-
-            val request = Request.Builder()
-            request.url("https://swapi.dev/api/planets/${binding.etNumber.text.toString().toInt()}/")
-
-
-            val call = client.newCall(request.build())
-
-            call.enqueue( object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    println(e.toString())
-                    CoroutineScope(Dispatchers.Main).launch {
-                        Toast.makeText(this@MainActivity, "Algo ha ido mal", Toast.LENGTH_SHORT).show()
-                        binding.pbDownloading.visibility = View.GONE
-                        binding.tvPlanet.text = "Algo ha ido mal"
-                    }
-                }
-
-                override fun onResponse(call: Call, response: Response) {
-                    println(response.toString())
-                    when (response.code) {
-                        200 -> response.body?.let { responseBody ->
-                            val body = responseBody.string()
-                            println(body)
-                            val gson = Gson()
-                            val planet = gson.fromJson(body, Planet::class.java)
-
-                            println(planet)
-                            CoroutineScope(Dispatchers.Main).launch {
-                                binding.pbDownloading.visibility = View.GONE
-                                Toast.makeText(this@MainActivity, "$planet", Toast.LENGTH_SHORT)
-                                    .show()
-                                binding.tvPlanet.text = planet.name
-                            }
-                        }
-                        else -> {
-                            CoroutineScope(Dispatchers.Main).launch {
-                                binding.pbDownloading.visibility = View.GONE
-                                binding.tvPlanet.text = response.code.toString()
-                            }
-                        }
-                    }
-                }
-            })
+            CoroutineScope(Dispatchers.IO).launch {
+                viewModel.sendGetPlanetRequest(binding.etNumber.text.toString())
+            }
         }
     }
 
     private fun initObservers() {
         viewModel.buttonEnabled.observe(this) { enabled ->
             binding.bDescarga.isEnabled = enabled
+        }
+        viewModel.errorMessage.observe(this) { errorMessage ->
+            binding.tvPlanet.text = errorMessage
+        }
+        viewModel.loadingViewVisible.observe(this) { visible ->
+            binding.pbDownloading.visibility = if (visible) View.VISIBLE else View.GONE
+        }
+        viewModel.planetReceived.observe(this) { planetReceived ->
+            binding.tvPlanet.text = planetReceived
         }
     }
 }
