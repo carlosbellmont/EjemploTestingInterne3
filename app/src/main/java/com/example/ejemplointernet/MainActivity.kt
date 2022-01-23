@@ -3,16 +3,12 @@ package com.example.ejemplointernet
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.widget.doAfterTextChanged
 import com.example.ejemplointernet.databinding.ActivityMainBinding
-import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.*
-import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
 
@@ -34,7 +30,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.bDescarga.setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {
-                viewModel.sendGetPlanetRequest(binding.etNumber.text.toString())
+                viewModel.sendGetPlanetRequestCallbacks(binding.etNumber.text.toString())
             }
         }
     }

@@ -1,7 +1,5 @@
 package com.example.ejemplointernet
 
-import android.view.View
-import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.ViewModel
@@ -53,16 +51,20 @@ class MainActivityViewModel : ViewModel() {
         setButtonEnabledOnMainThread(number != null && number >= 0)
     }
 
-    private fun generateUrl(id: String) : String {
+    private fun generateUrlPrivate(id: String) : String {
         return "https://swapi.dev/api/planets/${id.toInt()}/"
     }
 
-    suspend fun sendGetPlanetRequest(id: String) = withContext(Dispatchers.IO) {
+    internal fun generateUrlInternal(id: String) : String {
+        return "https://swapi.dev/api/planets/${id.toInt()}/"
+    }
+
+    suspend fun sendGetPlanetRequestCallbacks(id: String) = withContext(Dispatchers.IO) {
         setLoadingViewVisibleOnMainThread(true)
         val client = OkHttpClient()
 
         val request = Request.Builder()
-        request.url(generateUrl(id))
+        request.url(generateUrlPrivate(id))
         val call = client.newCall(request.build())
 
         call.enqueue( object : Callback {
@@ -100,4 +102,42 @@ class MainActivityViewModel : ViewModel() {
         })
     }
 
+    suspend fun sendGetPlanetRequestSynchronous(id: String) = withContext(Dispatchers.IO) {
+        setLoadingViewVisibleOnMainThread(true)
+        val client = OkHttpClient()
+
+        val request = Request.Builder()
+        request.url(generateUrlPrivate(id))
+        val call = client.newCall(request.build())
+        try {
+            val response = call.execute()
+            withContext(Dispatchers.Main) {
+                println(response.toString())
+                when (response.code) {
+                    200 -> response.body?.let { responseBody ->
+                        val body = responseBody.string()
+                        println(body)
+                        val gson = Gson()
+                        val planet = gson.fromJson(body, Planet::class.java)
+
+                        println(planet)
+
+                        setLoadingViewVisibleOnMainThread(false)
+                        setPlanetReceivedOnMainThread(planet.name)
+                    }
+                    else -> {
+
+                        setLoadingViewVisibleOnMainThread(false)
+                        setErrorMessageOnMainThread(response.code.toString())
+                    }
+                }
+            }
+        } catch (exception: IOException) {
+            withContext(Dispatchers.Main){
+                println(exception.toString())
+                setLoadingViewVisibleOnMainThread(false)
+                setErrorMessageOnMainThread("Algo ha ido mal")
+            }
+        }
+    }
 }
